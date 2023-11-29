@@ -44,10 +44,7 @@ def host():
         .strip()
     )
 
-    # return a testinfra connection to the container
-    docker_host = testinfra.get_host("docker://" + docker_id)
-
-    yield docker_host
+    yield testinfra.get_host(f"docker://{docker_id}")
     # at the end of the test suite, destroy the container
     subprocess.check_call(["docker", "rm", "-f", docker_id])
 
@@ -58,7 +55,7 @@ def mock_command(script, args, container):
     Allows for setup of commands we don't really want to have to run for real
     in unit tests
     """
-    full_script_path = "/usr/local/bin/{}".format(script)
+    full_script_path = f"/usr/local/bin/{script}"
     mock_script = dedent(
         r"""\
     #!/bin/bash -e
@@ -100,8 +97,8 @@ def mock_command_passthrough(script, args, container):
 
     Example use-case: mocking `git pull` but still allowing `git clone` to work as intended
     """
-    orig_script_path = container.check_output("command -v {}".format(script))
-    full_script_path = "/usr/local/bin/{}".format(script)
+    orig_script_path = container.check_output(f"command -v {script}")
+    full_script_path = f"/usr/local/bin/{script}"
     mock_script = dedent(
         r"""\
     #!/bin/bash -e
@@ -148,7 +145,7 @@ def mock_command_run(script, args, container):
     Allows for setup of commands we don't really want to have to run for real
     in unit tests
     """
-    full_script_path = "/usr/local/bin/{}".format(script)
+    full_script_path = f"/usr/local/bin/{script}"
     mock_script = dedent(
         r"""\
     #!/bin/bash -e
@@ -187,7 +184,7 @@ def mock_command_2(script, args, container):
     Allows for setup of commands we don't really want to have to run for real
     in unit tests
     """
-    full_script_path = "/usr/local/bin/{}".format(script)
+    full_script_path = f"/usr/local/bin/{script}"
     mock_script = dedent(
         r"""\
     #!/bin/bash -e

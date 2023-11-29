@@ -27,7 +27,7 @@ def test_supported_package_manager(host):
     package_manager_detect
     """
     )
-    expected_stdout = cross_box + " No supported package manager found"
+    expected_stdout = f"{cross_box} No supported package manager found"
     assert expected_stdout in package_manager_detect.stdout
     # assert package_manager_detect.rc == 1
 
@@ -40,7 +40,7 @@ def test_setupVars_are_sourced_to_global_scope(host):
     """
     setup_var_file = "cat <<EOF> /etc/pihole/setupVars.conf\n"
     for k, v in SETUPVARS.items():
-        setup_var_file += "{}={}\n".format(k, v)
+        setup_var_file += f"{k}={v}\n"
     setup_var_file += "EOF\n"
     host.run(setup_var_file)
 
@@ -65,7 +65,7 @@ def test_setupVars_are_sourced_to_global_scope(host):
     output = run_script(host, script).stdout
 
     for k, v in SETUPVARS.items():
-        assert "{}={}".format(k, v) in output
+        assert f"{k}={v}" in output
 
 
 def test_setupVars_saved_to_file(host):
@@ -75,7 +75,7 @@ def test_setupVars_saved_to_file(host):
     # dedent works better with this and padding matching script below
     set_setup_vars = "\n"
     for k, v in SETUPVARS.items():
-        set_setup_vars += "    {}={}\n".format(k, v)
+        set_setup_vars += f"    {k}={v}\n"
     host.run(set_setup_vars)
 
     script = dedent(
@@ -99,7 +99,7 @@ def test_setupVars_saved_to_file(host):
     output = run_script(host, script).stdout
 
     for k, v in SETUPVARS.items():
-        assert "{}={}".format(k, v) in output
+        assert f"{k}={v}" in output
 
 
 def test_selinux_not_detected(host):
@@ -113,7 +113,7 @@ def test_selinux_not_detected(host):
     checkSelinux
     """
     )
-    expected_stdout = info_box + " SELinux not detected"
+    expected_stdout = f"{info_box} SELinux not detected"
     assert expected_stdout in check_selinux.stdout
     assert check_selinux.rc == 0
 
@@ -129,7 +129,7 @@ def test_installPiholeWeb_fresh_install_no_errors(host):
     installPiholeWeb
     """
     )
-    expected_stdout = tick_box + " Installing sudoer file"
+    expected_stdout = f"{tick_box} Installing sudoer file"
     assert expected_stdout in installWeb.stdout
 
 
@@ -137,9 +137,8 @@ def get_directories_recursive(host, directory):
     if directory is None:
         return directory
     # returns all non-hidden subdirs of 'directory'
-    dirs_raw = host.run("find {} -type d -not -path '*/.*'".format(directory))
-    dirs = list(filter(bool, dirs_raw.stdout.splitlines()))
-    return dirs
+    dirs_raw = host.run(f"find {directory} -type d -not -path '*/.*'")
+    return list(filter(bool, dirs_raw.stdout.splitlines()))
 
 
 def test_installPihole_fresh_install_readableFiles(host):
@@ -171,7 +170,7 @@ def test_installPihole_fresh_install_readableFiles(host):
     # create configuration file
     setup_var_file = "cat <<EOF> /etc/pihole/setupVars.conf\n"
     for k, v in SETUPVARS.items():
-        setup_var_file += "{}={}\n".format(k, v)
+        setup_var_file += f"{k}={v}\n"
     setup_var_file += "INSTALL_WEB_SERVER=true\n"
     setup_var_file += "INSTALL_WEB_INTERFACE=true\n"
     setup_var_file += "EOF\n"
@@ -191,9 +190,9 @@ def test_installPihole_fresh_install_readableFiles(host):
     )
     assert 0 == install.rc
     maninstalled = True
-    if (info_box + " man not installed") in install.stdout:
+    if f"{info_box} man not installed" in install.stdout:
         maninstalled = False
-    if (info_box + " man pages not installed") in install.stdout:
+    if f"{info_box} man pages not installed" in install.stdout:
         maninstalled = False
     piholeuser = "pihole"
     exit_status_success = 0
@@ -290,7 +289,7 @@ def test_installPihole_fresh_install_readableFiles(host):
             actual_rc = host.run(check_lighttpd).rc
             assert exit_status_success == actual_rc
     # check readable and executable manpages
-    if maninstalled is True:
+    if maninstalled:
         check_man = test_cmd.format("x", "/usr/local/share/man", piholeuser)
         actual_rc = host.run(check_man).rc
         assert exit_status_success == actual_rc
@@ -334,12 +333,12 @@ def test_installPihole_fresh_install_readableFiles(host):
     actual_rc = host.run(check_sudo).rc
     assert exit_status_success == actual_rc
     directories = get_directories_recursive(host, "/etc/.pihole/")
+    findfiles = 'find "{}" -maxdepth 1 -type f  -exec echo {{}} \\;;'
     for directory in directories:
         check_pihole = test_cmd.format("r", directory, piholeuser)
         actual_rc = host.run(check_pihole).rc
         check_pihole = test_cmd.format("x", directory, piholeuser)
         actual_rc = host.run(check_pihole).rc
-        findfiles = 'find "{}" -maxdepth 1 -type f  -exec echo {{}} \\;;'
         filelist = host.run(findfiles.format(directory))
         files = list(filter(bool, filelist.stdout.splitlines()))
         for file in files:
@@ -508,13 +507,13 @@ def test_installPihole_fresh_install_readableBlockpage(host, test_webpage):
     actual_rc = host.run(check_html).rc
     assert exit_status_success == actual_rc
     # check directories below $webroot for read and execute permission
-    check_admin = test_cmd.format("r", webroot + "/admin", webuser)
+    check_admin = test_cmd.format("r", f"{webroot}/admin", webuser)
     actual_rc = host.run(check_admin).rc
     assert exit_status_success == actual_rc
-    check_admin = test_cmd.format("x", webroot + "/admin", webuser)
+    check_admin = test_cmd.format("x", f"{webroot}/admin", webuser)
     actual_rc = host.run(check_admin).rc
     assert exit_status_success == actual_rc
-    directories = get_directories_recursive(host, webroot + "/admin/")
+    directories = get_directories_recursive(host, f"{webroot}/admin/")
     for directory in directories:
         check_pihole = test_cmd.format("r", directory, webuser)
         actual_rc = host.run(check_pihole).rc
@@ -557,11 +556,11 @@ def test_installPihole_fresh_install_readableBlockpage(host, test_webpage):
             digcommand = r"dig A +short {} @127.0.0.1 | head -n 1"
             pagecontent = 'curl --verbose -L "{}"'
             for page in piholeWebpage:
-                testpage = "http://" + page + "/admin/"
+                testpage = f"http://{page}/admin/"
                 resolvesuccess = True
                 if is_ip(page) is False:
                     dig = host.run(digcommand.format(page))
-                    testpage = "http://" + dig.stdout.strip() + "/admin/"
+                    testpage = f"http://{dig.stdout.strip()}/admin/"
                     resolvesuccess = dig.rc == 0
                 if resolvesuccess or pihole_is_ns:
                     # check HTTP status of blockpage
@@ -583,7 +582,7 @@ def test_update_package_cache_success_no_errors(host):
     update_package_cache
     """
     )
-    expected_stdout = tick_box + " Update local cache of available packages"
+    expected_stdout = f"{tick_box} Update local cache of available packages"
     assert expected_stdout in updateCache.stdout
     assert "error" not in updateCache.stdout.lower()
 
@@ -600,7 +599,7 @@ def test_update_package_cache_failure_no_errors(host):
     update_package_cache
     """
     )
-    expected_stdout = cross_box + " Update local cache of available packages"
+    expected_stdout = f"{cross_box} Update local cache of available packages"
     assert expected_stdout in updateCache.stdout
     assert "Error: Unable to update package cache." in updateCache.stdout
 
@@ -630,11 +629,11 @@ def test_FTL_detect_aarch64_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Detected AArch64 (64 Bit ARM) processor"
+    expected_stdout = f"{tick_box} Detected AArch64 (64 Bit ARM) processor"
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -663,11 +662,11 @@ def test_FTL_detect_armv4t_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + (" Detected ARMv4 processor")
+    expected_stdout = f"{tick_box} Detected ARMv4 processor"
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -696,11 +695,11 @@ def test_FTL_detect_armv5te_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + (" Detected ARMv5 (or newer) processor")
+    expected_stdout = f"{tick_box} Detected ARMv5 (or newer) processor"
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -729,13 +728,13 @@ def test_FTL_detect_armv6l_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
     expected_stdout = tick_box + (
         " Detected ARMv6 processor " "(with hard-float support)"
     )
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -764,13 +763,13 @@ def test_FTL_detect_armv7l_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
     expected_stdout = tick_box + (
         " Detected ARMv7 processor " "(with hard-float support)"
     )
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -799,11 +798,11 @@ def test_FTL_detect_armv8a_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Detected ARMv8 (or newer) processor"
+    expected_stdout = f"{tick_box} Detected ARMv8 (or newer) processor"
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -821,11 +820,11 @@ def test_FTL_detect_x86_64_no_errors(host):
     FTLdetect "${binary}" "${theRest}"
     """
     )
-    expected_stdout = info_box + " FTL Checks..."
+    expected_stdout = f"{info_box} FTL Checks..."
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Detected x86_64 processor"
+    expected_stdout = f"{tick_box} Detected x86_64 processor"
     assert expected_stdout in detectPlatform.stdout
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in detectPlatform.stdout
 
 
@@ -867,7 +866,7 @@ def test_FTL_download_aarch64_no_errors(host):
     FTLinstall "pihole-FTL-aarch64-linux-gnu"
     """
     )
-    expected_stdout = tick_box + " Downloading and Installing FTL"
+    expected_stdout = f"{tick_box} Downloading and Installing FTL"
     assert expected_stdout in download_binary.stdout
     assert "error" not in download_binary.stdout.lower()
 

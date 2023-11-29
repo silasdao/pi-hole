@@ -36,7 +36,7 @@ def test_selinux_enforcing_exit(host):
     checkSelinux
     """
     )
-    expected_stdout = cross_box + " Current SELinux: enforcing"
+    expected_stdout = f"{cross_box} Current SELinux: enforcing"
     assert expected_stdout in check_selinux.stdout
     expected_stdout = "SELinux Enforcing detected, exiting installer"
     assert expected_stdout in check_selinux.stdout
@@ -54,7 +54,7 @@ def test_selinux_permissive(host):
     checkSelinux
     """
     )
-    expected_stdout = tick_box + " Current SELinux: permissive"
+    expected_stdout = f"{tick_box} Current SELinux: permissive"
     assert expected_stdout in check_selinux.stdout
     assert check_selinux.rc == 0
 
@@ -70,6 +70,6 @@ def test_selinux_disabled(host):
     checkSelinux
     """
     )
-    expected_stdout = tick_box + " Current SELinux: disabled"
+    expected_stdout = f"{tick_box} Current SELinux: disabled"
     assert expected_stdout in check_selinux.stdout
     assert check_selinux.rc == 0
